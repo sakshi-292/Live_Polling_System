@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, createContext, useContext, ReactNode } from "react";
+import type { useEffect, useState, useCallback, createContext, useContext, ReactNode } from "react";
 
 /* ── Types ─────────────────────────────────────────── */
 
