@@ -5,6 +5,7 @@ function generateKey(): string {
 }
 
 const VOTED_KEY = "votedPolls"; // sessionStorage key for voted poll IDs
+const CHOSEN_KEY = "chosenOptions"; // sessionStorage key for chosen option per poll
 
 export function useStudentSession() {
   const [studentKey] = useState<string>(() => {
@@ -52,5 +53,22 @@ export function useStudentSession() {
     return existing.includes(pollId);
   }, []);
 
-  return { studentKey, name, setName, markVoted, unmarkVoted, hasVoted };
+  /** Save the option the student chose for a given poll */
+  const saveChosenOption = useCallback((pollId: string, optionId: string) => {
+    const map: Record<string, string> = JSON.parse(
+      sessionStorage.getItem(CHOSEN_KEY) || "{}"
+    );
+    map[pollId] = optionId;
+    sessionStorage.setItem(CHOSEN_KEY, JSON.stringify(map));
+  }, []);
+
+  /** Get the option the student chose for a given poll */
+  const getChosenOption = useCallback((pollId: string): string | null => {
+    const map: Record<string, string> = JSON.parse(
+      sessionStorage.getItem(CHOSEN_KEY) || "{}"
+    );
+    return map[pollId] ?? null;
+  }, []);
+
+  return { studentKey, name, setName, markVoted, unmarkVoted, hasVoted, saveChosenOption, getChosenOption };
 }

@@ -336,6 +336,28 @@ export async function endPoll(pollId: string): Promise<void> {
 }
 
 /**
+ * Delete all ended polls and their associated votes.
+ */
+export async function clearHistory(): Promise<number> {
+  assertDbHealthy();
+
+  // Find all ended poll IDs
+  const endedPolls = await PollModel.find({ status: "ended" }).select("_id").lean();
+  const pollIds = endedPolls.map((p) => p._id);
+
+  if (pollIds.length === 0) return 0;
+
+  // Delete votes for those polls
+  await VoteModel.deleteMany({ pollId: { $in: pollIds } });
+
+  // Delete the polls
+  const result = await PollModel.deleteMany({ _id: { $in: pollIds }, status: "ended" });
+
+  console.log(`[PollService] Cleared ${result.deletedCount} ended polls and their votes`);
+  return result.deletedCount;
+}
+
+/**
  * Return list of ended polls with aggregated results.
  */
 export async function getHistory(): Promise<PollHistoryItem[]> {

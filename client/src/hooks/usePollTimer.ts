@@ -24,6 +24,8 @@ interface UsePollTimerReturn {
   percentElapsed: number;
   /** "mm:ss" formatted string with leading zeros */
   formatted: string;
+  /** Dynamic color based on remaining time: green → yellow → red */
+  timerColor: string;
 }
 
 export function usePollTimer({
@@ -99,5 +101,17 @@ export function usePollTimer({
   const seconds = remainingSec % 60;
   const formatted = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 
-  return { remainingSec, isEnded, percentElapsed, formatted };
+  // Dynamic timer color based on remaining percentage
+  // 🟢 >50% remaining → green, 🟡 20-50% → yellow, 🔴 <20% or ended → red
+  const percentRemaining = 100 - percentElapsed;
+  let timerColor: string;
+  if (isEnded || percentRemaining < 20) {
+    timerColor = "#EF4444"; // red
+  } else if (percentRemaining < 50) {
+    timerColor = "#EAB308"; // yellow
+  } else {
+    timerColor = "#22C55E"; // green
+  }
+
+  return { remainingSec, isEnded, percentElapsed, formatted, timerColor };
 }

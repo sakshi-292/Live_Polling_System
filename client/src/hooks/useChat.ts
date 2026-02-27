@@ -155,5 +155,58 @@ export function useChat(
     socket.emit(SOCKET_EVENTS.CHAT_CLEAR, { pollId });
   }, [socket, pollId]);
 
-  return { messages, loading, sendMessage, clearChat };
+  /* ── Typing indicator ─────────────────────────── */
+  const [typingUsers, setTypingUsers] = useState<{ name: string; key: string }[]>([]);
+  const typingTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const lastTypingEmitRef = useRef<number>(0);
+
+  // Listen for typing updates from other users
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleTypingUpdate = (payload: { name: string; key: string }) => {
+      // Add or refresh this user in the typing list
+      setTypingUsers((prev) => {
+        const exists = prev.find((u) => u.key === payload.key);
+        if (!exists) return [...prev, payload];
+        return prev;
+      });
+
+      // Clear previous timer for this user
+      if (typingTimersRef.current[payload.key]) {
+        clearTimeout(typingTimersRef.current[payload.key]);
+      }
+
+      // Remove after 1.2s of no new typing events
+      typingTimersRef.current[payload.key] = setTimeout(() => {
+        setTypingUsers((prev) => prev.filter((u) => u.key !== payload.key));
+        delete typingTimersRef.current[payload.key];
+      }, 1200);
+    };
+
+    socket.on(SOCKET_EVENTS.CHAT_TYPING_UPDATE, handleTypingUpdate);
+
+    return () => {
+      socket.off(SOCKET_EVENTS.CHAT_TYPING_UPDATE, handleTypingUpdate);
+      // Cleanup all timers
+      Object.values(typingTimersRef.current).forEach(clearTimeout);
+      typingTimersRef.current = {};
+    };
+  }, [socket]);
+
+  // Emit typing event (throttled — max once per 800ms)
+  const emitTyping = useCallback(() => {
+    if (!socket) return;
+    const now = Date.now();
+    if (now - lastTypingEmitRef.current < 800) return;
+    lastTypingEmitRef.current = now;
+    socket.emit(SOCKET_EVENTS.CHAT_TYPING, { name: myName, key: myKey });
+  }, [socket, myName, myKey]);
+
+  // Stop typing — remove self from others' lists immediately when sending
+  const stopTyping = useCallback(() => {
+    lastTypingEmitRef.current = 0; // reset throttle so next keystroke works
+  }, []);
+
+  return { messages, loading, sendMessage, clearChat, typingUsers, emitTyping, stopTyping };
 }

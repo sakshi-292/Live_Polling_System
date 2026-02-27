@@ -60,6 +60,18 @@ export function registerChatHandlers(io: Server, socket: Socket) {
     }
   );
 
+  /* ── chat:typing — relay to other clients ──────── */
+  socket.on(
+    SOCKET_EVENTS.CHAT_TYPING,
+    (payload: { name: string; key: string }) => {
+      // Broadcast to everyone except the sender
+      socket.broadcast.emit(SOCKET_EVENTS.CHAT_TYPING_UPDATE, {
+        name: payload.name,
+        key: payload.key,
+      });
+    }
+  );
+
   /* ── cleanup on disconnect ─────────────────────── */
   socket.on("disconnect", () => {
     clearRateLimit(socket.id);

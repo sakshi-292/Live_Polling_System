@@ -17,6 +17,8 @@ interface PollOptionsListProps {
   // results mode
   results?: OptionResult[];
   options?: PollOption[];
+  /** Pass only on student results page to highlight correct/incorrect choices */
+  studentChosenId?: string | null;
 }
 
 export default function PollOptionsList({
@@ -26,6 +28,7 @@ export default function PollOptionsList({
   onSelect,
   results,
   options,
+  studentChosenId,
 }: PollOptionsListProps) {
   if (mode === "results") {
     // Build result rows using options + results data
@@ -38,6 +41,7 @@ export default function PollOptionsList({
         text: opt.text,
         isCorrect: opt.isCorrect,
         percent: resultData?.percent ?? 0,
+        count: resultData?.count ?? 0,
       };
     });
 
@@ -51,6 +55,7 @@ export default function PollOptionsList({
             text: r.text,
             isCorrect: r.isCorrect,
             percent: r.percent,
+            count: r.count,
           }));
 
     return (
@@ -62,6 +67,9 @@ export default function PollOptionsList({
             text={r.text}
             percentage={r.percent}
             isCorrect={r.isCorrect}
+            optionId={r.id}
+            studentChosenId={studentChosenId}
+            count={r.count}
           />
         ))}
       </div>

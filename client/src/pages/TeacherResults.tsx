@@ -18,7 +18,7 @@ export default function TeacherResults() {
   const { participants } = useParticipants(socket);
 
   // Reusable countdown timer
-  const { formatted: timerStr } = usePollTimer({
+  const { formatted: timerStr, timerColor } = usePollTimer({
     startedAt: activePoll?.startedAt ?? 0,
     durationSec: activePoll?.durationSec ?? 0,
     serverTime,
@@ -99,7 +99,7 @@ export default function TeacherResults() {
                 Poll ended
               </span>
             ) : (
-              <span className="flex items-center gap-1.5 text-red-500 text-sm font-medium">
+              <span className="flex items-center gap-1.5 text-sm font-medium" style={{ color: timerColor }}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="w-4 h-4"
@@ -145,6 +145,22 @@ export default function TeacherResults() {
             View Poll history
           </button>
         </div>
+
+        {/* ── Response count line ────────────────────────────── */}
+        {activePoll && (() => {
+          const totalVotes = results.reduce((sum, r) => sum + r.count, 0);
+          const totalParticipants = participants.length;
+          return (
+            <p className="text-sm font-medium mb-3" style={{ color: "#6B7280" }}>
+              <span className="font-bold" style={{ color: totalVotes >= totalParticipants && totalParticipants > 0 ? "#22C55E" : "#EF4444" }}>
+                {totalVotes}
+              </span>
+              {" / "}
+              <span className="font-bold">{totalParticipants}</span>
+              {" students have responded"}
+            </p>
+          );
+        })()}
 
         {/* ── Question Card (Frame 427320129: 727px, hug, r9, 1px #AF8FF1, gap 14) ── */}
         <div

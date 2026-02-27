@@ -30,13 +30,13 @@ export default function StudentPoll() {
   const { socket } = useSocket();
   const { activePoll, serverTime, loading } = useActivePoll(socket);
   const { participants } = useParticipants(socket);
-  const { studentKey, name, hasVoted, markVoted, unmarkVoted } =
+  const { studentKey, name, hasVoted, markVoted, unmarkVoted, saveChosenOption } =
     useStudentSession();
 
   const { showToast } = useToast();
 
   // Reusable countdown timer
-  const { isEnded: timerEnded, formatted: timerStr } = usePollTimer({
+  const { isEnded: timerEnded, formatted: timerStr, timerColor } = usePollTimer({
     startedAt: activePoll?.startedAt ?? 0,
     durationSec: activePoll?.durationSec ?? 0,
     serverTime,
@@ -86,8 +86,9 @@ export default function StudentPoll() {
     console.log("[StudentPoll] Emitting poll:vote with ACK", payload);
     setSubmitted(true);
 
-    // Optimistically mark as voted in sessionStorage
+    // Optimistically mark as voted + save chosen option in sessionStorage
     markVoted(activePoll.pollId);
+    saveChosenOption(activePoll.pollId, selectedOption);
 
     // ACK callback
     socket.emit(
@@ -129,6 +130,7 @@ export default function StudentPoll() {
     submitted,
     markVoted,
     unmarkVoted,
+    saveChosenOption,
   ]);
 
   // If poll ended (status changed to "ended"), navigate to results
@@ -163,7 +165,7 @@ export default function StudentPoll() {
         {/* Header */}
         <div className="flex items-center gap-4 mb-4">
           <h2 className="text-lg font-bold">Question 1</h2>
-          <span className="flex items-center gap-1.5 text-red-500 text-sm font-medium">
+          <span className="flex items-center gap-1.5 text-sm font-medium" style={{ color: timerColor }}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="w-4 h-4"

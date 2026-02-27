@@ -17,6 +17,8 @@ export default function PollHistory() {
   const [history, setHistory] = useState<PollHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [clearing, setClearing] = useState(false);
+  const [cleared, setCleared] = useState(false);
 
   useEffect(() => {
     async function fetchHistory() {
@@ -90,31 +92,81 @@ export default function PollHistory() {
         {/* Empty state */}
         {!loading && !error && history.length === 0 && (
           <p className="text-center text-gray-500 py-16">
-            No polls have been completed yet.
+            {cleared
+              ? "Poll history has been successfully deleted."
+              : "No polls have been completed yet."}
           </p>
         )}
 
         {/* Poll cards */}
         {!loading && !error && history.length > 0 && (
-          <div className="space-y-8">
-            {history.map((item, idx) => (
-              <div key={item.poll.pollId}>
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                  Question {idx + 1}
-                </h3>
-                <div className="rounded-xl overflow-hidden border border-gray-200 bg-white">
-                  <div className="text-white px-5 py-3 text-sm font-medium" style={{ background: "linear-gradient(135deg, #343434, #6E6E6E)", borderRadius: "9px 9px 0 0" }}>
-                    {item.poll.question}
+          <>
+            {/* Clear History button — at the top */}
+            <div className="flex justify-end mb-6">
+              <button
+                onClick={async () => {
+                  setClearing(true);
+                  try {
+                    const res = await fetch(`${API_URL}/api/poll/history`, { method: "DELETE" });
+                    if (res.ok) {
+                      setHistory([]);
+                      setCleared(true);
+                    }
+                  } catch {
+                    // ignore
+                  } finally {
+                    setClearing(false);
+                  }
+                }}
+                disabled={clearing}
+                className="inline-flex items-center gap-2 text-white font-semibold text-sm transition-all duration-200 cursor-pointer hover:brightness-110 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  background: "#3A3A3B",
+                  paddingLeft: 28,
+                  paddingRight: 28,
+                  height: 42,
+                  borderRadius: 34,
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                  <path d="M10 11v6" />
+                  <path d="M14 11v6" />
+                </svg>
+                {clearing ? "Clearing…" : "Clear History"}
+              </button>
+            </div>
+
+            <div className="space-y-8">
+              {history.map((item, idx) => (
+                <div key={item.poll.pollId}>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                    Question {idx + 1}
+                  </h3>
+                  <div className="rounded-xl overflow-hidden border border-gray-200 bg-white">
+                    <div className="text-white px-5 py-3 text-sm font-medium" style={{ background: "linear-gradient(135deg, #343434, #6E6E6E)", borderRadius: "9px 9px 0 0" }}>
+                      {item.poll.question}
+                    </div>
+                    <PollOptionsList
+                      mode="results"
+                      results={item.results}
+                      options={item.poll.options}
+                    />
                   </div>
-                  <PollOptionsList
-                    mode="results"
-                    results={item.results}
-                    options={item.poll.options}
-                  />
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
 

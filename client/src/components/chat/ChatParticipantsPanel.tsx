@@ -6,6 +6,36 @@ import { useChat } from "../../hooks/useChat";
 import { useToast } from "../ui/Toast";
 import { SOCKET_EVENTS } from "../../types/socketEvents";
 
+/* ── Avatar helpers ──────────────────────────────────── */
+const AVATAR_COLORS = [
+  "#FBBF24", // amber
+  "#34D399", // emerald
+  "#60A5FA", // blue
+  "#F472B6", // pink
+  "#A78BFA", // violet
+  "#FB923C", // orange
+  "#2DD4BF", // teal
+  "#F87171", // red
+  "#4ADE80", // green
+  "#C084FC", // purple
+];
+
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return (parts[0]?.[0] ?? "?").toUpperCase();
+}
+
+function getAvatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
 interface ChatParticipantsPanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -29,7 +59,7 @@ export default function ChatParticipantsPanel({
   const [activeTab, setActiveTab] = useState(0);
   const { socket } = useSocket();
   const { participants } = useParticipants(socket);
-  const { messages, sendMessage, clearChat } = useChat(socket, myKey, myName, pollId);
+  const { messages, sendMessage, clearChat, typingUsers, emitTyping, stopTyping } = useChat(socket, myKey, myName, pollId);
   const { showToast } = useToast();
   const [kickingKey, setKickingKey] = useState<string | null>(null);
   const [inputText, setInputText] = useState("");
@@ -63,6 +93,7 @@ export default function ChatParticipantsPanel({
 
     sendMessage(trimmed);
     setInputText("");
+    stopTyping();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -169,22 +200,39 @@ export default function ChatParticipantsPanel({
               <div ref={messagesEndRef} />
             </div>
 
+            {/* Typing indicator */}
+            {typingUsers.length > 0 && (
+              <div className="flex-shrink-0 px-4 py-1">
+                <p className="text-xs text-gray-400 italic truncate">
+                  {typingUsers.length === 1
+                    ? `${typingUsers[0].name} is typing…`
+                    : typingUsers.length === 2
+                      ? `${typingUsers[0].name}, ${typingUsers[1].name} are typing…`
+                      : "Multiple people are typing…"}
+                </p>
+              </div>
+            )}
+
             {/* Input bar */}
             <div className="flex-shrink-0 border-t border-gray-100 px-3 py-2 flex items-center gap-2">
               <input
                 type="text"
                 value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
+                onChange={(e) => {
+                  setInputText(e.target.value);
+                  emitTyping();
+                }}
                 onKeyDown={handleKeyDown}
                 placeholder="Type a message…"
                 maxLength={300}
                 className="flex-1 text-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-400"
               />
               {/* Clear Chat — teacher only, inside input bar */}
-              {isTeacher && messages.length > 0 && (
+              {isTeacher && (
                 <button
                   onClick={() => clearChat()}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors cursor-pointer flex-shrink-0"
+                  disabled={messages.length === 0}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors cursor-pointer flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
                   style={{ backgroundColor: "#3A3A3B" }}
                   aria-label="Clear chat"
                   title="Clear chat"
@@ -248,8 +296,13 @@ export default function ChatParticipantsPanel({
                       className="border-b border-gray-50"
                     >
                       <td className="py-2.5 text-sm text-gray-700">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0" />
+                        <div className="flex items-center gap-2.5">
+                          <span
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                            style={{ backgroundColor: getAvatarColor(p.name), color: "#1F2937" }}
+                          >
+                            {getInitials(p.name)}
+                          </span>
                           {p.name}
                         </div>
                       </td>

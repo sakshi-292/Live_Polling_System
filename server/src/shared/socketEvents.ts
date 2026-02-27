@@ -9,6 +9,7 @@ export const SOCKET_EVENTS = {
   TEACHER_KICK: "teacher:kick",
   CHAT_SEND: "chat:send",
   CHAT_CLEAR: "chat:clear",
+  CHAT_TYPING: "chat:typing",
 
   // Server → Client
   POLL_ACTIVE: "poll:active",
@@ -18,5 +19,6 @@ export const SOCKET_EVENTS = {
   CHAT_NEW: "chat:new",
   CHAT_HISTORY: "chat:history",
   CHAT_CLEARED: "chat:cleared",
+  CHAT_TYPING_UPDATE: "chat:typing:update",
   ERROR_MESSAGE: "error:message",
 } as const;
