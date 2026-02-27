@@ -14,11 +14,11 @@ const { PORT, NODE_ENV, CLIENT_URL } = ENV;
 
 // ── HTTP server ────────────────────────────────────────
 const server = http.createServer(app);
-
+const allowedOrigins = [CLIENT_URL, "http://localhost:5173"].filter(Boolean);
 // ── Socket.io server ───────────────────────────────────
 const io = new SocketIOServer(server, {
   cors: {
-    origin: CLIENT_URL,
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -57,7 +57,7 @@ async function start() {
   await connectMongo();
 
   server.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT} [${NODE_ENV}]`);
+    console.log(`🚀 Server running on port ${PORT} [${NODE_ENV}]`);
     console.log(`🔌 Socket.io ready, allowing origin: ${CLIENT_URL}`);
   });
 }
