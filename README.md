@@ -230,13 +230,13 @@ cd client && npm run build
 
 ### Environment Variables
 
-| Service  | Variable       | Value                                |
-| -------- | -------------- | ------------------------------------ |
-| Render   | `PORT`         | `5001` (or Render-assigned)          |
-| Render   | `MONGO_URI`    | MongoDB Atlas connection string      |
-| Render   | `CLIENT_URL`   | Vercel frontend URL                  |
-| Render   | `NODE_ENV`     | `production`                         |
-| Vercel   | `VITE_API_URL` | Render backend URL                   |
+| Service  | Variable       | Value                                  |
+| -------- | -------------- | ---------------------------------------|
+| Render   | `PORT`         | Render-assigned (via process.env.PORT) |
+| Render   | `MONGO_URI`    | MongoDB Atlas connection string        |
+| Render   | `CLIENT_URL`   | Vercel frontend URL                    |
+| Render   | `NODE_ENV`     | `production`                           |
+| Vercel   | `VITE_API_URL` | Render backend URL                     |
 
 ### Vercel Configuration
 
